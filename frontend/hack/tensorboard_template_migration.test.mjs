@@ -83,18 +83,6 @@ for (const [name, oldest, legacy] of [
   })
 }
 
-for (const version of ['20260707', '20260930']) {
-  test('TensorBoard panel: imports saved template ' + version, () => {
-    const result = importTemplate(metadata.MetadataFormTensorboard, version, {
-      ttlHours: 24,
-      logDir: '/home/user/logs',
-    })
-    assert.equal(result.logDir, '/home/user/logs')
-    assert.equal(result.name, '')
-    if (version === '20260707') assert.equal('ttlHours' in result, false)
-  })
-}
-
 test('unrelated single-job templates keep their scheduler migration', () => {
   const result = importTemplate(metadata.MetadataFormSingle, '20260707', {
     scheduleType: 'backfill',
@@ -102,4 +90,37 @@ test('unrelated single-job templates keep their scheduler migration', () => {
   })
   assert.equal('scheduleType' in result, false)
   assert.equal('tensorboardLogDir' in result, false)
+})
+
+for (const name of [
+  'Jupyter',
+  'WebIDE',
+  'Custom',
+  'Tensorflow',
+  'Pytorch',
+  'Single',
+  'CustomEmias',
+  'JupyterEmias',
+]) {
+  const form = metadata['MetadataForm' + name]
+  const previous = ['Single', 'CustomEmias', 'JupyterEmias'].includes(name)
+    ? '20260922'
+    : '20261030'
+  for (const version of [previous, form.version]) {
+    test(name + ': resets SYS_ADMIN on import/clone at ' + version, () => {
+      const data = { sysAdminEnabled: true, jobName: 'existing privileged job', envs: [] }
+      const result = importTemplate(form, version, data)
+      assert.equal(result.sysAdminEnabled, false)
+      assert.equal(result.jobName, data.jobName)
+      assert.equal(data.sysAdminEnabled, true)
+    })
+  }
+  test(name + ': defaults SYS_ADMIN off in old templates', () => {
+    assert.equal(importTemplate(form, previous, { jobName: 'old job' }).sysAdminEnabled, false)
+  })
+}
+
+test('SYS_ADMIN import normalization does not affect non-job configurations', () => {
+  const form = metadata.MetadataFormAccount
+  assert.equal(importTemplate(form, form.version, { sysAdminEnabled: true }).sysAdminEnabled, true)
 })

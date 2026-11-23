@@ -21,10 +21,10 @@ import (
 )
 
 const (
-	// v4 allows model/dataset downloads to reuse another source or revision.
-	APIVersion = 4
-	// v3 first exposes /admin/system-config/scheduler-extender, which this CLI calls with no fallback.
-	MinSupportedBackendAPIVersion    = 3
+	// v7 adds the container command execution API.
+	APIVersion = 7
+	// job exec requires the v7 endpoint and has no equivalent fallback.
+	MinSupportedBackendAPIVersion    = 7
 	APIVersionHeader                 = "X-Crater-API-Version"
 	defaultDevelopmentProductVersion = "dev"
 	defaultDevelopmentBuildType      = "development"
